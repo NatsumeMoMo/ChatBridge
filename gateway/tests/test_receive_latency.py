@@ -13,7 +13,9 @@ def test_new_friend_change_precedes_pinned_idle_rechecks_and_bounds_background_w
     async def check():
         adapter=WeChat(store,{'hookQueue':str(store.root),'backgroundCaptureLimit':1});adapter.refreshed=time.monotonic();adapter.started=0
         names=['pinned-'+str(i) for i in range(40)]+['friend'];now=int(time.time())
-        for name in names:add_contact(store,adapter,name);adapter.session_seen[name]=((now-10,1),0)
+        # 新建运行器的单调时钟可能不足 30 秒，过期时间必须相对当前时钟设置。
+        expired=time.monotonic()-31
+        for name in names:add_contact(store,adapter,name);adapter.session_seen[name]=((now-10,1),expired)
         class Hook:
             async def query(self,db,sql):return [{'username':name,'last_timestamp':now-10,'last_msg_locald_id':2 if name=='friend' else 1} for name in names]
         adapter.hook=Hook();captured=[]
