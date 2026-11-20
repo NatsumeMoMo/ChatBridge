@@ -19,8 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-This license covers original ChatBridge code. Third-party code, binaries,
-and source fragments referenced by compatibility patches retain their own
-terms; see docs/THIRD_PARTY.md. No license is granted to the WeChat client
-or the separately obtained source-available WeChat Hook.
