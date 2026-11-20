@@ -1,0 +1,77 @@
+{
+  "name": "chatbridge",
+  "displayName": "ChatBridge",
+  "description": "跨设备聊天工作台：通过端到端加密连接自己的平台网关",
+  "version": "0.2.1",
+  "publisher": "chatbridge-local",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onView:chatbridge.chat",
+    "onCommand:chatbridge.open"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chatbridge",
+          "title": "ChatBridge",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "chatbridge": [
+        {
+          "type": "webview",
+          "id": "chatbridge.chat",
+          "name": "聊天"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "chatbridge.open",
+        "title": "ChatBridge: 打开聊天"
+      },
+      {
+        "command": "chatbridge.pair",
+        "title": "ChatBridge: 导入设备配对"
+      },
+      {
+        "command": "chatbridge.reconnect",
+        "title": "ChatBridge: 重新连接"
+      },
+      {
+        "command": "chatbridge.diagnostics",
+        "title": "ChatBridge: 查看连接诊断"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "node --test test/*.test.cjs",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.1.1",
+    "jsdom": "^31.0.1",
+    "typescript": "^5.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NatsumeMoMo/ChatBridge.git"
+  },
+  "overrides": {
+    "minimatch": "11.0.1"
+  }
+}

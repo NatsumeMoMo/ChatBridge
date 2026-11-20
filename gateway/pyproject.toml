@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chatbridge-gateway"
+version = "0.2.1"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = ["cryptography>=46,<51", "zstandard==0.25.0", "defusedxml==0.7.1"]
+
+[project.scripts]
+chatbridge = "chatbridge.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

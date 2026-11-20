@@ -1,0 +1,19 @@
+{
+  "root": "C:\\ChatBridge",
+  "python": "C:\\Python310\\python.exe",
+  "frpc": "C:\\Downloads\\frpc.exe",
+  "frpcSha256": "REPLACE_WITH_SHA256_OF_YOUR_FRPC_BUILD",
+  "wechatExe": "C:\\ChatBridgeValidation\\runtime\\Weixin4110\\Weixin.exe",
+  "wechatCore": "C:\\ChatBridgeValidation\\runtime\\Weixin4110\\4.1.10.27\\Weixin.dll",
+  "hookDll": "C:\\ChatBridgeValidation\\runtime\\Weixin4110\\version.dll",
+  "hashes": {
+    "launcher": "REPLACE_WITH_SHA256",
+    "core": "REPLACE_WITH_SHA256",
+    "hook": "REPLACE_WITH_SHA256_OF_YOUR_BUILD"
+  },
+  "hookQueue": "C:\\ChatBridgeValidation\\private\\hook-queue",
+  "accountRoot": "C:\\Users\\YOUR_USER\\Documents\\xwechat_files\\YOUR_ACCOUNT",
+  "ownId": "YOUR_WECHAT_ID",
+  "voicePython": "C:\\ChatBridgeCodecs\\Scripts\\python.exe",
+  "codecPython": "C:\\ChatBridgeCodecs\\Scripts\\python.exe"
+}

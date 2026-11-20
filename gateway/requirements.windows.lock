@@ -1,0 +1,7 @@
+# Validated gateway environment: CPython 3.10 x64 on Windows, 2026-11-20.
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.11
+typing_extensions==4.16.0
+zstandard==0.25.0
+defusedxml==0.7.1
