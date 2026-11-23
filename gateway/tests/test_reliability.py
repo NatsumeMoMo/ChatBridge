@@ -81,6 +81,7 @@ def test_login_flag_alone_does_not_mark_wechat_ready(store):
     with pytest.raises(BridgeError):asyncio.run(adapter.poll())
     assert store.get('account',adapter.account_id)['status']=='degraded'
     class Ready(Unready):
+        async def call(self,data):return {'data':{'IsLogin':1,'dbs':[{'dbName':name} for name in ['contact.db','session.db','message_0.db']]}}
         async def query(self,database,sql):return []
     adapter.hook=Ready();asyncio.run(adapter.poll())
     assert store.get('account',adapter.account_id)['status']=='online'

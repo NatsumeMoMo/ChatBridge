@@ -76,6 +76,17 @@ class WeChat:
     async def refresh(self,incremental=False):
         status=await self.hook.call({'op':'status'})
         logged=status.get('data',{}).get('IsLogin')==1
+        # 上游登录标记依赖数据库注册，冷启动先做只读枚举才能解除互相等待。
+        databases=await self.hook.call({'op':'dbs'})
+        names={row.get('dbName','') for row in databases.get('data',{}).get('dbs',[])}
+        if not {'contact.db','session.db'}.issubset(names) or not any(re.fullmatch(r'message_\d+\.db',name) for name in names):
+            # 名称查找走上游的轻量刷新，避免空枚举的长退避错过新登录的热句柄。
+            try:await self.hook.query('session.db','SELECT 1 AS ready')
+            except BridgeError as error:
+                if error.code!='WECHAT_DATABASE_UNAVAILABLE':raise
+            databases=await self.hook.call({'op':'dbs'})
+            names={row.get('dbName','') for row in databases.get('data',{}).get('dbs',[])}
+        logged=logged or databases.get('data',{}).get('IsLogin')==1
         if not logged:self.store.put('account',{'id':self.account_id,'platformId':'wechat','name':'个人微信',
                                  'status':'loginRequired','capabilities':self.manifest['capabilities']})
         if not logged:raise BridgeError('WECHAT_LOGIN_REQUIRED','微信需要登录',True)
@@ -83,8 +94,10 @@ class WeChat:
         if current is None or current.get('status')=='loginRequired':
             self.store.put('account',{'id':self.account_id,'platformId':'wechat','name':'个人微信','status':'degraded',
                                      'lastErrorCode':'WECHAT_DATABASE_NOT_READY','capabilities':self.manifest['capabilities']})
-        databases=await self.hook.call({'op':'dbs'})
-        self.databases=sorted({row['dbName'] for row in databases.get('data',{}).get('dbs',[]) if re.fullmatch(r'message_\d+\.db',row.get('dbName',''))})
+        self.databases=sorted(name for name in names if re.fullmatch(r'message_\d+\.db',name))
+        # 只有联系人可读时仍不能收消息，必需库齐全后才结束冷启动重试。
+        if not {'contact.db','session.db'}.issubset(names) or not self.databases:
+            raise BridgeError('WECHAT_DATABASE_NOT_READY','微信消息接口正在初始化',True)
         self.contact_offset=await self.contact_page(0)
         while self.contact_offset is not None and not incremental:self.contact_offset=await self.contact_page(self.contact_offset)
         if not self.store.get('contact',self.conversation_id('filehelper')):

@@ -47,6 +47,5 @@ $taskActions=@{
     'ChatBridge-RelayClient'=(New-ScheduledTaskAction -Execute "$taskRoot\bin\frpc.exe" -Argument ('-c "'+$taskRoot+'\private\frpc.toml"'))
 }
 foreach($taskName in $taskActions.Keys){Register-ScheduledTask -TaskName $taskName -Action $taskActions[$taskName] -Principal $taskPrincipal -Settings $taskSettings -Trigger $taskTrigger -Force | Out-Null}
-$taskDesktop=Join-Path ([Environment]::GetFolderPath('Desktop')) 'Start ChatBridge.cmd'
-[IO.File]::WriteAllText($taskDesktop,('@echo off'+"`r`n"+'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "'+$taskRoot+'\private\Start.ps1" -Root "'+$taskRoot+'"'+"`r`npause`r`n"),[Text.Encoding]::ASCII)
+& (Join-Path $PSScriptRoot 'Install-Launcher.ps1') -Root $taskRoot -NoLaunch
 Write-Host 'Installed. Use the desktop launcher after completing Windows / WeChat login.'

@@ -90,7 +90,19 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 安装器验证所有文件哈希、创建隔离运行环境、在 VM 用户下使用 DPAPI 包装密钥，并注册 `ChatBridge-Client / ChatBridge-Gateway / ChatBridge-RelayClient`。网关仅绑定 `127.0.0.1:19443`。若目标已有 secrets.dpapi，安装器拒绝覆盖，转用更新流程。
 
-首次微信可能需要打开专用客户端窗口、手机扫码或确认登录。桌面 `Start ChatBridge.cmd` 启动缺失任务、检查当前网关进程就绪及中继 TCP；重复执行不重启正常进程。锁屏可运行，重启 Windows 后仍需该用户先登录。
+登录 Windows 桌面后，双击 **“启动 ChatBridge”** 快捷方式即可。深色启动窗口分别显示微信、消息服务和连接通道；显示“已就绪”后即可锁屏虚拟机，在 PC B 连接。关闭启动窗口不会关闭已经启动的后台组件。
+
+首次微信可能需要手机扫码或确认登录，窗口会等待认证后自动继续。客户端已进入聊天主界面、数据库尚不可读时显示“正在初始化消息接口”；不会把接口初始化失败提示成需要重新扫码。Windows 重启后仍需该用户先登录，启动器不保存 Windows 密码、不配置自动登录。
+
+启动器只启动缺失的组件，重复双击会回到已有窗口。健康检查直接核对当前进程、监听端口、通道连接和本轮网关采集结果，避免旧状态或慢 WMI 查询误判。失败可点“重新检查”或“查看日志”；日志位于安装目录的 `private\launcher.log`，状态为 `private\launcher-status.json`。不会通过反复重启微信处理接口错误。
+
+已有安装可单独更新桌面入口，无需重新配对或替换聊天历史：
+
+```powershell
+.\deploy\windows\Install-Launcher.ps1 -Root C:\ChatBridge -NoLaunch
+```
+
+`Install.ps1` 和 `Update.ps1` 都会安装该入口，旧 CMD 文件移到私有备份目录。原有 `Start.ps1` / `Start-ChatBridge.ps1` 路径继续转到同一启动器；自动化需要无窗口检查时可使用 `Start.ps1 -Headless -WaitSeconds 900`。启动时完成客户端固定哈希检查，只有联系人、会话和消息库完成初始化且实际采集成功后才显示就绪。
 
 ## 6. PC B 插件
 

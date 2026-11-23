@@ -32,15 +32,15 @@ try{
     }else{foreach($taskFile in @('Client-Guard.ps1','Start.ps1')){[IO.File]::WriteAllText((Join-Path "$taskRoot\private" $taskFile),[IO.File]::ReadAllText((Join-Path "$taskRoot\app\deploy\windows" $taskFile)),[Text.UTF8Encoding]::new($true))}}
     if($taskWasRunning){
         Start-ScheduledTask 'ChatBridge-Gateway';$taskHealthy=$false
-        for($taskAttempt=0;$taskAttempt -lt 60;$taskAttempt++){
+        for($taskAttempt=0;$taskAttempt -lt 300;$taskAttempt++){
             Start-Sleep -Seconds 1
-            $taskState=& $taskPython "$taskRoot\app\tools\status_guest.py" --root $taskRoot | ConvertFrom-Json
-            $taskListening=@(Get-NetTCPConnection -State Listen -LocalPort 19443 -ErrorAction SilentlyContinue | Where-Object {$_.OwningProcess -eq $taskState.gatewayPid -and $_.LocalAddress -eq '127.0.0.1'})
-            if($taskState.ready -and $taskListening.Count){$taskHealthy=$true;break}
+            $taskState=& $taskPython "$taskRoot\app\tools\startup_probe.py" --root $taskRoot | ConvertFrom-Json
+            if($taskState.gateway.ready){$taskHealthy=$true;break}
         }
         if(!$taskHealthy){throw 'Updated gateway is not ready'}
     }
-    @{ok=$true;previousCode=$taskPrevious;historyAndKeysPreserved=$true;gatewayRemainsStopped=!$taskWasRunning;legacyStartupPreserved=$taskLegacy} | ConvertTo-Json
+    & "$taskRoot\app\deploy\windows\Install-Launcher.ps1" -Root $taskRoot -NoLaunch | Out-Null
+    @{ok=$true;previousCode=$taskPrevious;historyAndKeysPreserved=$true;gatewayRemainsStopped=!$taskWasRunning;desktopLauncherInstalled=$true;legacyStartupPreserved=$taskLegacy} | ConvertTo-Json
 }catch{
     $taskFailure=$_.Exception.Message
     Stop-ScheduledTask 'ChatBridge-Gateway' -ErrorAction SilentlyContinue

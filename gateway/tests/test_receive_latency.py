@@ -58,7 +58,7 @@ def test_periodic_contacts_are_one_page_after_urgent_messages(store):
         add_contact(store,adapter,'friend');adapter.session_seen['friend']=((1,1),time.monotonic())
         order=[]
         class Hook:
-            async def call(self,args):return {'data':{'IsLogin':1,'dbs':[]}}
+            async def call(self,args):return {'data':{'IsLogin':1,'dbs':[{'dbName':name} for name in ['contact.db','session.db','message_0.db']]}}
             async def query(self,db,sql):
                 if db=='session.db':return [{'username':'friend','last_timestamp':2,'last_msg_locald_id':2}]
                 order.append('contacts');return [{'username':'contact-'+str(i),'remark':'','nick_name':'','local_type':1,'delete_flag':0} for i in range(200)]
@@ -84,3 +84,42 @@ def test_poller_deducts_scan_time_from_interval_and_backs_off_on_failure(store,m
         return delays[0]
     assert asyncio.run(check(False))==.05
     assert asyncio.run(check(True))>=1
+
+def test_cold_login_flag_does_not_block_read_only_database_initialization(store):
+    adapter=WeChat(store,{'hookQueue':str(store.root)})
+    class ColdHook:
+        calls=[]
+        async def call(self,args):
+            self.calls.append(args['op'])
+            return {'data':{'IsLogin':0}} if args['op']=='status' else {'data':{'IsLogin':1,'dbs':[{'dbName':name} for name in ['contact.db','session.db','message_0.db']]}}
+        async def query(self,db,sql):return []
+    adapter.hook=ColdHook();asyncio.run(adapter.poll())
+    assert adapter.hook.calls==['status','dbs']
+    assert store.get('account',adapter.account_id)['status']=='online'
+
+
+def test_partial_database_initialization_keeps_account_unready(store):
+    from chatbridge.errors import BridgeError
+    adapter=WeChat(store,{'hookQueue':str(store.root)})
+    class PartialHook:
+        async def call(self,args):return {'data':{'IsLogin':1,'dbs':[{'dbName':'contact.db'}]}}
+        async def query(self,db,sql):
+            assert db=='session.db' and sql=='SELECT 1 AS ready'
+            raise BridgeError('WECHAT_DATABASE_UNAVAILABLE')
+    adapter.hook=PartialHook()
+    with pytest.raises(BridgeError) as error:asyncio.run(adapter.poll())
+    assert error.value.code=='WECHAT_DATABASE_NOT_READY'
+    assert not adapter.refreshed and store.get('account',adapter.account_id)['status']!='online'
+
+
+def test_lightweight_lookup_recovers_names_without_waiting_for_full_rescan(store):
+    adapter=WeChat(store,{'hookQueue':str(store.root)})
+    class DeferredNames:
+        available=False
+        async def call(self,args):
+            return {'data':{'IsLogin':int(self.available),'dbs':[{'dbName':name} for name in ['contact.db','session.db','message_0.db']] if self.available else []}}
+        async def query(self,db,sql):
+            if sql=='SELECT 1 AS ready':self.available=True
+            return []
+    adapter.hook=DeferredNames();asyncio.run(adapter.poll())
+    assert store.get('account',adapter.account_id)['status']=='online'
